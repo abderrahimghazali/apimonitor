@@ -174,6 +174,9 @@ def run(ctx, urls, config_file, interval, timeout, slack_webhook, discord_webhoo
             if dashboard:
                 click.echo(f"Dashboard available at: http://localhost:{dashboard_port}")
             
+            if not background:
+                click.echo("Press Ctrl+C to stop monitoring")
+            
             # Start dashboard if enabled
             dashboard_task = None
             if dashboard:
@@ -542,12 +545,124 @@ def stats(config_file, endpoint, hours, json_output):
 async def start_dashboard(monitor: ApiMonitor, port: int):
     """Start the web dashboard"""
     try:
-        # This would import and start the dashboard
-        # For now, just a placeholder
-        click.echo(f"Dashboard would start on port {port}")
-        # await dashboard.start(monitor, port)
-    except ImportError:
-        click.echo("Dashboard dependencies not installed. Run: pip install apimonitor[dashboard]")
+        from fastapi import FastAPI, HTTPException
+        from fastapi.responses import HTMLResponse, JSONResponse
+        import uvicorn
+        
+        app = FastAPI(title="ApiMonitor Dashboard", version="1.0.0")
+        
+        @app.get("/", response_class=HTMLResponse)
+        async def dashboard_home():
+            """Simple dashboard home page"""
+            summary = monitor.get_health_summary()
+            stats = monitor.get_all_stats()
+            
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>ApiMonitor Dashboard</title>
+                <meta http-equiv="refresh" content="30">
+                <style>
+                    body {{ font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }}
+                    .header {{ background-color: #2c3e50; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }}
+                    .summary {{ background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+                    .endpoint {{ background-color: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+                    .healthy {{ border-left: 5px solid #27ae60; }}
+                    .degraded {{ border-left: 5px solid #f39c12; }}
+                    .unhealthy {{ border-left: 5px solid #e74c3c; }}
+                    .status {{ font-weight: bold; text-transform: uppercase; }}
+                    .stats {{ display: flex; gap: 20px; }}
+                    .stat {{ text-align: center; }}
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>🔍 ApiMonitor Dashboard</h1>
+                    <p>Real-time API health monitoring</p>
+                </div>
+                
+                <div class="summary">
+                    <h2>Summary</h2>
+                    <div class="stats">
+                        <div class="stat">
+                            <h3>{summary.get('healthy', 0)}</h3>
+                            <p>Healthy</p>
+                        </div>
+                        <div class="stat">
+                            <h3>{summary.get('degraded', 0)}</h3>
+                            <p>Degraded</p>
+                        </div>
+                        <div class="stat">
+                            <h3>{summary.get('unhealthy', 0)}</h3>
+                            <p>Unhealthy</p>
+                        </div>
+                        <div class="stat">
+                            <h3>{summary.get('endpoints', 0)}</h3>
+                            <p>Total Endpoints</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h2>Endpoints</h2>
+            """
+            
+            for endpoint_id, endpoint_stats in stats.items():
+                status_class = endpoint_stats.current_status.value.lower()
+                html_content += f"""
+                <div class="endpoint {status_class}">
+                    <h3>{endpoint_id}</h3>
+                    <p><strong>Status:</strong> <span class="status {status_class}">{endpoint_stats.current_status.value}</span></p>
+                    <p><strong>Uptime:</strong> {endpoint_stats.uptime_percentage:.2f}%</p>
+                    <p><strong>Avg Response Time:</strong> {endpoint_stats.average_response_time:.1f}ms</p>
+                    <p><strong>Total Checks:</strong> {endpoint_stats.total_checks}</p>
+                    <p><strong>Last Check:</strong> {endpoint_stats.last_check.strftime('%Y-%m-%d %H:%M:%S') if endpoint_stats.last_check else 'Never'}</p>
+                </div>
+                """
+            
+            html_content += """
+                <div style="margin-top: 20px; text-align: center; color: #7f8c8d;">
+                    <p>Page auto-refreshes every 30 seconds</p>
+                </div>
+            </body>
+            </html>
+            """
+            
+            return html_content
+        
+        @app.get("/api/health")
+        async def api_health():
+            """API health summary endpoint"""
+            return monitor.get_health_summary()
+        
+        @app.get("/api/stats")
+        async def api_stats():
+            """Get all endpoint statistics"""
+            stats = monitor.get_all_stats()
+            return {k: v.dict() for k, v in stats.items()}
+        
+        @app.get("/api/stats/{endpoint_id}")
+        async def api_endpoint_stats(endpoint_id: str):
+            """Get stats for specific endpoint"""
+            stats = monitor.get_endpoint_stats(endpoint_id)
+            if stats:
+                return stats.dict()
+            raise HTTPException(status_code=404, detail="Endpoint not found")
+        
+        # Start the server
+        config = uvicorn.Config(
+            app, 
+            host="127.0.0.1", 
+            port=port, 
+            log_level="warning",  # Reduce uvicorn logging
+            access_log=False
+        )
+        server = uvicorn.Server(config)
+        await server.serve()
+        
+    except ImportError as e:
+        click.echo(f"Dashboard dependencies not installed: {e}")
+        click.echo("Run: pip install fastapi uvicorn")
     except Exception as e:
         click.echo(f"Error starting dashboard: {e}")
 
