@@ -33,10 +33,11 @@ class TestEndpointConfig:
     
     def test_invalid_url(self):
         """Test invalid URL validation"""
+        # Test truly invalid URLs (protocol gets auto-added for most URLs)
         with pytest.raises(ValidationError):
             EndpointConfig(
                 id="test",
-                url="invalid-url",  # Missing protocol
+                url="",  # Empty URL should fail
                 method=HttpMethod.GET
             )
     
@@ -56,8 +57,8 @@ class TestEndpointConfig:
             url="example.com",
             method=HttpMethod.GET
         )
-        # Should be handled in endpoint logic, not model validation
-        assert config.url == "example.com"
+        # Auto-adds https:// protocol
+        assert config.url == "https://example.com"
 
 
 class TestNotificationConfig:

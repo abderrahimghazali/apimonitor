@@ -132,8 +132,8 @@ class MonitorConfig(BaseModel):
         """Save configuration to file"""
         file_path = Path(file_path)
         
-        # Convert to dict for serialization
-        data = self.dict()
+        # Convert to dict for serialization without Python-specific types
+        data = self._to_serializable_dict()
         
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -148,6 +148,36 @@ class MonitorConfig(BaseModel):
                     
         except Exception as e:
             raise ConfigurationError(f"Error writing config file: {e}")
+    
+    def _to_serializable_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary with simple types for serialization"""
+        data = {}
+        
+        # Copy basic fields
+        for field_name, field_value in self.__dict__.items():
+            if field_name in ['endpoints', 'notifications']:
+                continue
+            data[field_name] = field_value
+        
+        # Convert endpoints
+        data['endpoints'] = []
+        for endpoint in self.endpoints:
+            endpoint_dict = endpoint.dict()
+            # Convert enum to string
+            if 'method' in endpoint_dict:
+                endpoint_dict['method'] = endpoint_dict['method'].value if hasattr(endpoint_dict['method'], 'value') else str(endpoint_dict['method'])
+            data['endpoints'].append(endpoint_dict)
+        
+        # Convert notifications
+        data['notifications'] = {}
+        for name, notification in self.notifications.items():
+            notif_dict = notification.dict()
+            # Convert enum to string
+            if 'type' in notif_dict:
+                notif_dict['type'] = notif_dict['type'].value if hasattr(notif_dict['type'], 'value') else str(notif_dict['type'])
+            data['notifications'][name] = notif_dict
+        
+        return data
     
     @classmethod
     def create_example_config(cls) -> 'MonitorConfig':

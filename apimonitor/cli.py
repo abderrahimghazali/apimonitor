@@ -262,7 +262,7 @@ def check(ctx, urls, timeout, method, headers, expected_status, json_output, qui
         expected_codes = list(expected_status) if expected_status else [200]
         
         for url in urls:
-            if not quiet:
+            if not quiet and not json_output:
                 click.echo(f"Checking {url}...")
             
             try:

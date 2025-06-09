@@ -135,7 +135,8 @@ class EndpointConfig(BaseModel):
     @validator('url')
     def validate_url(cls, v):
         if not v.startswith(('http://', 'https://')):
-            raise ValueError('URL must start with http:// or https://')
+            # Auto-add https:// if no protocol specified
+            v = f"https://{v}"
         return v
     
     @validator('check_interval_seconds')
