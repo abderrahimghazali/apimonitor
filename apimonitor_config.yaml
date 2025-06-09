@@ -1,0 +1,70 @@
+dashboard_auth: null
+dashboard_enabled: true
+dashboard_host: 127.0.0.1
+dashboard_port: 8080
+data_dir: ./apimonitor_data
+default_interval: 300
+default_retries: 3
+default_timeout: 10.0
+endpoints:
+- body: null
+  check_interval_seconds: 60
+  expected_response_time_ms: null
+  expected_status_codes:
+  - 200
+  headers: {}
+  id: api_health
+  max_retries: 3
+  method: !!python/object/apply:apimonitor.models.HttpMethod
+  - GET
+  params: {}
+  response_contains: null
+  response_not_contains: null
+  retry_delay_seconds: 1.0
+  sla_response_time_ms: null
+  sla_uptime_percentage: 99.9
+  timeout_seconds: 5.0
+  url: https://httpbin.org/status/200
+- body: null
+  check_interval_seconds: 300
+  expected_response_time_ms: null
+  expected_status_codes:
+  - 200
+  headers: {}
+  id: api_slow
+  max_retries: 3
+  method: !!python/object/apply:apimonitor.models.HttpMethod
+  - GET
+  params: {}
+  response_contains: null
+  response_not_contains: null
+  retry_delay_seconds: 1.0
+  sla_response_time_ms: 3000.0
+  sla_uptime_percentage: 99.9
+  timeout_seconds: 10.0
+  url: https://httpbin.org/delay/2
+log_file: null
+log_level: INFO
+max_history_days: 30
+notifications:
+  console:
+    config: {}
+    cooldown_minutes: 5
+    enabled: true
+    max_notifications_per_hour: 10
+    on_degraded: false
+    on_failure: true
+    on_recovery: true
+    type: !!python/object/apply:apimonitor.models.NotificationType
+    - console
+  slack:
+    config:
+      webhook_url: https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+    cooldown_minutes: 5
+    enabled: false
+    max_notifications_per_hour: 5
+    on_degraded: false
+    on_failure: true
+    on_recovery: true
+    type: !!python/object/apply:apimonitor.models.NotificationType
+    - slack
