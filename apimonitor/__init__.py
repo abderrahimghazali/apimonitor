@@ -3,7 +3,7 @@ ApiMonitor - API Health Monitoring Tool
 """
 
 __version__ = "1.0.0"
-__author__ = "YourName"
+__author__ = "AbderrahimGHAZALI"
 
 from .monitor import ApiMonitor
 from .endpoint import Endpoint
