@@ -241,10 +241,11 @@ def check(ctx, urls, timeout, method, headers, expected_status, json_output, qui
         
         # Parse headers
         header_dict = {}
-        for header in headers:
-            if ':' in header:
-                key, value = header.split(':', 1)
-                header_dict[key.strip()] = value.strip()
+        if headers:
+            for header in headers:
+                if ':' in header:
+                    key, value = header.split(':', 1)
+                    header_dict[key.strip()] = value.strip()
         
         # Expected status codes
         expected_codes = list(expected_status) if expected_status else [200]
@@ -332,8 +333,8 @@ def check(ctx, urls, timeout, method, headers, expected_status, json_output, qui
                     result.error_message or ""
                 ])
             
-            headers = ["Status", "URL", "Health", "Code", "Time", "Error"]
-            click.echo(tabulate(table_data, headers=headers, tablefmt="grid"))
+            table_headers = ["Status", "URL", "Health", "Code", "Time", "Error"]
+            click.echo(tabulate(table_data, headers=table_headers, tablefmt="grid"))
             
             # Overall summary
             healthy = sum(1 for r in results if r.health_status == HealthStatus.HEALTHY)
