@@ -437,10 +437,6 @@ endpoints:
 max_history_days: 7
 ```
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
 - Built with [aiohttp](https://aiohttp.readthedocs.io/) for fast async HTTP requests
@@ -451,9 +447,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ---
 
 **Need help?** 
-- 📖 [Documentation](https://github.com/yourusername/apimonitor/wiki)
-- 🐛 [Report Issues](https://github.com/yourusername/apimonitor/issues)
-- 💬 [Discussions](https://github.com/yourusername/apimonitor/discussions)
+- 🐛 [Report Issues](https://github.com/abderrahimghazali/apimonitor/issues)
+- 💬 [Discussions](https://github.com/abderrahimghazali/apimonitor/discussions)
 
 ---
 
