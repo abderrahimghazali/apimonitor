@@ -111,44 +111,52 @@ def run(ctx, urls, config_file, interval, timeout, slack_webhook, discord_webhoo
             
             # Add URLs from command line
             if urls:
+                from .models import EndpointConfig
                 for i, url in enumerate(urls):
                     endpoint_id = f"cli_endpoint_{i+1}"
-                    config.add_endpoint({
-                        'id': endpoint_id,
-                        'url': url,
-                        'check_interval_seconds': interval,
-                        'timeout_seconds': timeout
-                    })
+                    endpoint_config = EndpointConfig(
+                        id=endpoint_id,
+                        url=url,
+                        check_interval_seconds=interval,
+                        timeout_seconds=timeout
+                    )
+                    config.add_endpoint(endpoint_config)
             
             # Add notification channels from CLI
             if slack_webhook:
-                config.add_notification('cli_slack', {
-                    'type': NotificationType.SLACK,
-                    'enabled': True,
-                    'config': {'webhook_url': slack_webhook},
-                    'on_failure': True,
-                    'on_recovery': True
-                })
+                from .models import NotificationConfig
+                slack_config = NotificationConfig(
+                    type=NotificationType.SLACK,
+                    enabled=True,
+                    config={'webhook_url': slack_webhook},
+                    on_failure=True,
+                    on_recovery=True
+                )
+                config.add_notification('cli_slack', slack_config)
             
             if discord_webhook:
-                config.add_notification('cli_discord', {
-                    'type': NotificationType.DISCORD,
-                    'enabled': True,
-                    'config': {'webhook_url': discord_webhook},
-                    'on_failure': True,
-                    'on_recovery': True
-                })
+                from .models import NotificationConfig
+                discord_config = NotificationConfig(
+                    type=NotificationType.DISCORD,
+                    enabled=True,
+                    config={'webhook_url': discord_webhook},
+                    on_failure=True,
+                    on_recovery=True
+                )
+                config.add_notification('cli_discord', discord_config)
             
             if email_config:
                 try:
                     email_conf = json.loads(email_config)
-                    config.add_notification('cli_email', {
-                        'type': NotificationType.EMAIL,
-                        'enabled': True,
-                        'config': email_conf,
-                        'on_failure': True,
-                        'on_recovery': True
-                    })
+                    from .models import NotificationConfig
+                    email_notif_config = NotificationConfig(
+                        type=NotificationType.EMAIL,
+                        enabled=True,
+                        config=email_conf,
+                        on_failure=True,
+                        on_recovery=True
+                    )
+                    config.add_notification('cli_email', email_notif_config)
                 except json.JSONDecodeError:
                     click.echo("Error: Invalid email configuration JSON", err=True)
                     return
